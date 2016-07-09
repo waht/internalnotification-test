@@ -85,6 +85,32 @@ int printKeyErrors(Key *errorKey) {
   return 0;
 }
 
+ssize_t getBinaryKeyValue(Key *key) {
+  size_t *buffer;
+  size_t bufferSize = keyGetValueSize(key);
+  buffer = (size_t *)elektraMalloc(bufferSize);
+  if (buffer == NULL) {
+    // Malloc failed
+    return 0;
+  }
+  if (keyGetBinary(key, buffer, bufferSize) == -1) {
+    return 0;
+  }
+
+  // verify that address is not null
+  if (buffer == NULL) {
+    return 0;
+  }
+
+  // convert to value from buffer
+  size_t value = *buffer;
+
+  // free buffer
+  elektraFree(buffer);
+
+  return value;
+}
+
 int internalnotificationRegisterInt(KDB *kdb, int *variable, Key *key) {
   typedef int (*elektraInternalnotificationRegisterIntCallback)(
       void *handle, int *variable, Key *key);
@@ -102,63 +128,26 @@ int internalnotificationRegisterInt(KDB *kdb, int *variable, Key *key) {
 
     KeySet *conf = ksNew(20, KS_END);
     kdbGet(kdb, conf, parentKey);
-    Key *keyFunction = ksLookupByName(conf, EXPORTED_FUNCTION, 0);
 
+    Key *keyFunction = ksLookupByName(conf, EXPORTED_FUNCTION, 0);
     if (keyFunction == 0 || !keyIsBinary(keyFunction)) {
       // Key value is not binary
       return -1;
     }
-
-    size_t *buffer;
-    size_t bufferSize = keyGetValueSize(keyFunction);
-    buffer = (size_t *)elektraMalloc(bufferSize);
-    if (buffer == NULL) {
-      // Malloc failed
+    address = getBinaryKeyValue(keyFunction);
+    if (address == 0) {
       return -1;
     }
-    if (keyGetBinary(keyFunction, buffer, bufferSize) == -1) {
-      return -1;
-    }
-
-    // verify that address is not null
-    if (buffer == NULL) {
-      return -1;
-    }
-
-    // convert address from buffer
-    address = *buffer;
-
-    // free buffer
-    elektraFree(buffer);
 
     Key *keyHandle = ksLookupByName(conf, EXPORTED_HANDLE, 0);
-
     if (keyHandle == 0 || !keyIsBinary(keyHandle)) {
       // Key value is not binary
       return -1;
     }
-
-    size_t *handleBuffer;
-    size_t handleBufferSize = keyGetValueSize(keyHandle);
-    handleBuffer = (size_t *)elektraMalloc(handleBufferSize);
-    if (handleBuffer == NULL) {
-      // Malloc failed
+    handle = getBinaryKeyValue(keyHandle);
+    if (handle == 0) {
       return -1;
     }
-    if (keyGetBinary(keyHandle, handleBuffer, handleBufferSize) == -1) {
-      return -1;
-    }
-
-    // verify that handle is not null
-    if (handleBuffer == NULL) {
-      return -1;
-    }
-
-    // convert address from buffer
-    handle = *handleBuffer;
-
-    // free buffer
-    elektraFree(handleBuffer);
   }
 
   // Call function
