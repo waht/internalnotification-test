@@ -67,7 +67,7 @@ int printKeyWarnings (Key * warningKey)
 }
 
 // from http://doc.libelektra.org/api/latest/html/group__kdb.html
-int printKeyErrors (Key * errorKey)
+int printKeyError (Key * errorKey)
 {
 	const Key * metaError = keyGetMeta (errorKey, "error");
 	if (!metaError) return 1; /* There is no current error */
@@ -165,7 +165,7 @@ void updateAndPrintGreeting (KDB * kdb, KeySet * ks, Key * parentKey)
 	int result = kdbGet (kdb, ks, parentKey);
 	printf ("kdbGet result was %d\n", result);
 	printKeyWarnings (parentKey);
-	printKeyErrors (parentKey);
+	printKeyError (parentKey);
 
 	Key * k = ksLookupByName (ks, "/sw/waht/elektra-test/greeting", 0);
 	if (k != 0)
@@ -199,7 +199,7 @@ void setTemperatureToRandomValue (KDB * kdb, KeySet * ks, Key * parentKey)
 	int result = kdbSet (kdb, ks, parentKey);
 	printf ("kdbSet result was %d\n", result);
 	printKeyWarnings (parentKey);
-	printKeyErrors (parentKey);
+	printKeyError (parentKey);
 }
 
 int main (int argc, char ** argv)
@@ -228,7 +228,10 @@ int main (int argc, char ** argv)
 	printf ("temperature variable located at %p\n", &temperature);
 
 	// get data intially
-	kdbGet (kdb, ks, parentKey);
+	int kdbGetResult = kdbGet (kdb, ks, parentKey);
+	printf ("kdbGet result was %d\n", kdbGetResult);
+	printKeyWarnings (parentKey);
+	printKeyError (parentKey);
 
 	while (1)
 	{
